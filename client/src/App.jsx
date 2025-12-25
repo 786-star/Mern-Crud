@@ -1,10 +1,12 @@
-import React from 'react'
+import Navbar from './component/Navbar'
+import Home from './component/Home'
 
 const App = () => {
   return (
-    <div>
-      <h1 className='text-red-500'>Welcome To Crud App</h1>
-    </div>
+    <>
+      <Navbar />
+      <Home />
+    </>
   )
 }
 
