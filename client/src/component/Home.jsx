@@ -2,38 +2,8 @@ import { useEffect, useState } from 'react';
 import Input from './InputField'
 import Table from './Table';
 import { bookBaseUrl } from '../api/apiInstance';
-
-const columns = [
-    {
-        header: "Book Name",
-        accessor: "bookName",
-    },
-    {
-        header: "Book Title",
-        accessor: "bookTitle",
-    },
-    {
-        header: "Author",
-        accessor: "author",
-    },
-    {
-        header: "Selling Price",
-        accessor: "sellingPrice",
-    },
-    {
-        header: "Publish Date",
-        accessor: "publishDate",
-    },
-
-    {
-        header: "Action",
-        render: (row) => (
-            <button className="text-indigo-600 hover:underline">
-                Edit
-            </button>
-        ),
-    },
-];
+import { MdDelete } from "react-icons/md";
+import { FaPen } from "react-icons/fa";
 
 const Home = () => {
     const [bookForm, setBookForm] = useState(
@@ -46,6 +16,7 @@ const Home = () => {
         }
     )
     const [bookLists, setBookLists] = useState([])
+    const [editId, setEditId] = useState(null);
 
     const getAllBooks = async () => {
         try {
@@ -69,20 +40,91 @@ const Home = () => {
 
     const handleSubmit = async () => {
         try {
-            const data = await bookBaseUrl.post('/book/add', bookForm)
+            if (editId) {
+                // UPDATE
+                await bookBaseUrl.put(`/book/${editId}`, bookForm);
+            } else {
+                // ADD
+                await bookBaseUrl.post('/book/add', bookForm);
+            }
+
             setBookForm({
                 bookName: "",
                 bookTitle: "",
                 author: "",
                 sellingPrice: "",
                 publishDate: ""
-            })
+            });
 
+            setEditId(null);
+            getAllBooks();
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            const { data } = await bookBaseUrl.delete(`book/${id}`)
+            console.log(data)
             getAllBooks();
         } catch (error) {
             console.log(error)
         }
     }
+
+    const handleEditClick = (book) => {
+        setEditId(book._id);
+        setBookForm({
+            bookName: book.bookName,
+            bookTitle: book.bookTitle,
+            author: book.author,
+            sellingPrice: book.sellingPrice,
+            publishDate: book.publishDate?.split("T")[0],
+        });
+    };
+
+    const columns = [
+        {
+            header: "Book Name",
+            accessor: "bookName",
+        },
+        {
+            header: "Book Title",
+            accessor: "bookTitle",
+        },
+        {
+            header: "Author",
+            accessor: "author",
+        },
+        {
+            header: "Selling Price",
+            accessor: "sellingPrice",
+        },
+        {
+            header: "Publish Date",
+            accessor: "publishDate",
+        },
+
+        {
+            header: "Action",
+            render: (row) => (
+                <>
+                    <div className='flex gap-4 '>
+                        <button className="text-red-600 hover:underline bg-red-200 h-8 w-8 flex justify-center items-center text-xl rounded cursor-pointer" onClick={() => handleDelete(row._id)}>
+                            <MdDelete />
+                        </button>
+                        <button className="text-green-600 hover:underline bg-green-200 h-8 w-8 flex justify-center items-center text-xl rounded cursor-pointer" onClick={() => handleEditClick(row)}>
+                            <FaPen />
+                        </button>
+                    </div>
+
+                </>
+            ),
+        },
+    ];
+
+
 
 
     return (
@@ -105,7 +147,7 @@ const Home = () => {
                 </div>
             </div>
             <div className='w-full flex justify-end'>
-                <button className='bg-gray-700 text-white h-9 w-22 rounded-md cursor-pointer' onClick={handleSubmit}>Submit</button>
+                <button className='bg-gray-700 text-white h-9 w-22 rounded-md cursor-pointer' onClick={handleSubmit}>{editId ? "Update" : "Submit"}</button>
             </div>
 
             <Table columns={columns}
